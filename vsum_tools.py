@@ -193,7 +193,7 @@ def evaluate_user_summaries(user_summary, eval_metric='avg'):
 
 def generate_summary_video(video_path, sum_video_path, summary):
 	import cv2
-	os.remove(sum_video_path)
+	# os.remove(f"{video_path}/{sum_video_path}")
 
 	# %rm -rf $sum_video_path
 	# %mkdir $sum_video_path
@@ -215,7 +215,7 @@ def generate_summary_video(video_path, sum_video_path, summary):
 	index = 0
 	choosen = 0
 	while success :  
-		# print(sum_video_path + "/%d.png"%index)
+		print(sum_video_path + "/%d.png"%index)
 		if summary[index] == 1:
 			cv2.imwrite(sum_video_path + "/frame-%s.png"%(padding(choosen)), frame)
 			choosen += 1
@@ -224,7 +224,7 @@ def generate_summary_video(video_path, sum_video_path, summary):
 
 	print(sum_video_path)
 	
-	# !cd $sum_video_path ; ffmpeg -f image2 -framerate $fps -i frame-%06d.png -s $size_param -c:v h264 $sum_video_path/summary.mp4
+	os.system(f"cd {sum_video_path} ; ffmpeg -f image2 -framerate {fps} -i frame-%06d.png -s {size_param} -c:v h264 {sum_video_path}/summary.mp4")
 
 # https://www.tensorflow.org/api_docs/python/tf/keras/applications
 # https://keras.io/api/applications/
@@ -392,3 +392,77 @@ def extract_features4video(model_func, preprocess_func, target_size, picks, vide
 	print("-- Done. Feature size: ", features.shape)
 
 	return features
+
+
+def extract_frame_and_features4video(model_func, preprocess_func, target_size, picks, video_file):
+	
+	from tensorflow.keras.preprocessing import image
+	import numpy as np
+
+	# initialize the video stream, pointer to output video file, and frame dimensions
+	vs = cv2.VideoCapture(video_file)
+	writer = None
+	(W, H) = (None, None)
+	# loop over frames from the video file stream
+
+	features = []
+	pick_frames = []
+
+	n_frames = -1
+
+	total = len(picks)
+	count = 0
+
+	import time
+	start = time.time()
+
+	selected_frame = picks[count]
+	frame_before_converting = []
+
+	while True:
+		# read the next frame from the file
+		(grabbed, frame) = vs.read()
+		# if the frame was not grabbed, then we have reached the end of the stream
+		if not grabbed:
+			break
+
+		n_frames += 1
+
+		#if (n_frames in picks): // banana code - làm chậm 10 lần
+		if( selected_frame == n_frames):
+			count += 1
+			if(count < total):
+				selected_frame = picks[count]
+			if(count % 50 == 0):
+				print("-- Processing frame ", count, "/", total, ": ", n_frames)
+			# convert it from BGR to RGB
+			# ordering, resize the frame to a fixed target_size, and then
+			# perform mean subtraction
+			frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+			frame = cv2.resize(frame, target_size).astype("float32")
+			frame_before_converting.append(frame)
+			img_array = image.img_to_array(frame)
+			expanded_img_array = np.expand_dims(img_array, axis=0)
+			preprocessed_img = preprocess_func(expanded_img_array)
+			pick_frames.append(preprocessed_img)
+			
+			# print(n_frames)
+			# debug only
+			#if(count>10):
+			#  break
+	extract_frame_time = time.time()
+
+	print(f"Extracting frame linearly using opencv took {extract_frame_time - start:.2f} seconds")
+
+	pick_frames = np.vstack(pick_frames)
+	print("pick frames ", len(pick_frames))
+	# xử lý theo batch
+	print("-- Extracting features: ...")
+	features = model_func.predict(pick_frames, batch_size = 32)
+	print("-- Done. Feature size: ", features.shape)
+
+	extract_features_time = time.time()
+	print(f"Extracting frame feature using {model_func} took  {extract_features_time - extract_frame_time:.2f} seconds")
+
+
+	return frame_before_converting, features

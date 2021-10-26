@@ -1,21 +1,26 @@
+#command to start docker: docker run -it --rm --gpus all --device /dev/nvidia0  --device /dev/nvidia-modeset --device /dev/nvidiactl -u $(id -u):$(id -g) -v `pwd`:/current truongan/uit-vsum:1.0 bash
+#command to run in docker: python /current/main.py OieROrpzYuo.mp4 output.h5^C
+
 from vsum_tools import *
 from vasnet import *
 
 segment_length = 2 #in seconds
 
 sampling_rate = 2 #in frame per second
-model_root_dir = '/content/drive/MyDrive/VSum/Colab/UIT-VSUM'
-model_file_path = model_root_dir + '/vasnet_inceptionv3_avg_2048/models/tvsum_splits_1_0.6187176441788906.tar.pth'
+model_root_dir = '/working'
+model_file_path = model_root_dir + '/model.pth.tar'
 
 model_func, preprocess_func, target_size = model_picker('inceptionv3', 'max')
 import h5py
 
 import cv2
+import sys
 
 # %rm test.h5
 # new_h5 = h5py.File('test.h5', 'w')
 
-video_path = '/working/video.mp4'
+video_path = f"/current/{sys.argv[1]}"
+output_path = f"/current/{sys.argv[2]}"
 
 video = cv2.VideoCapture(video_path)
 
@@ -44,8 +49,18 @@ while True:
 picks = [i for i in picks if i < frameCount]
 
 
+frames, features = extract_frame_and_features4video(model_func, preprocess_func, target_size, picks, video_path)
 
+os.remove(output_path)
+with h5py.File(output_path, 'w') as h5file:
+  h5file.create_dataset('frames', data = frames) 
+  h5file.create_dataset('features', data = features) 
+
+
+quit()
 features = extract_features4video(model_func, preprocess_func, target_size, picks, video_path)
+
+
 
 print(changepoints, nfps, picks, features, sep = '\n')
 
@@ -67,9 +82,18 @@ print(sum(summary), len(summary))
 
 
 
-first_video_path = 'video.mp4'
+# sum_video_name = 'video.mp4'
 
 
-sum_video_path = "/test_watch_summary/"
+sum_video_path = "/current/tmp/"
 
-generate_summary_video(first_video_path, sum_video_path, summary)
+try:
+  import shutil
+  shutil.rmtree(sum_video_path)
+except:
+  pass
+
+
+os.mkdir(sum_video_path)
+
+generate_summary_video(video_path, sum_video_path, summary)
