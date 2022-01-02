@@ -1,8 +1,9 @@
 #command to start docker: docker run -it --rm --gpus all --device /dev/nvidia0  --device /dev/nvidia-modeset --device /dev/nvidiactl -u $(id -u):$(id -g) -v `pwd`:/current truongan/uit-vsum:1.0 bash
-#command to run in docker: python /current/main.py OieROrpzYuo.mp4 output.h5^C
+#command to run in docker: python /current/main.py OieROrpzYuo.mp4 output.h5
 
 from vsum_tools import *
 from vasnet import *
+import shutil
 
 segment_length = 2 #in seconds
 
@@ -41,21 +42,34 @@ nfps = [x[1] - x[0] + 1 for x in changepoints]
 picks = []
 i = 0
 while True:
-  picks += [int(fps*i + x* int(fps//sampling_rate)) for x in range(sampling_rate)]
-  i += 1
-  if picks[-1] > frameCount :
-    break
+	picks += [int(fps*i + x* int(fps//sampling_rate)) for x in range(sampling_rate)]
+	i += 1
+	if picks[-1] > frameCount :
+		break
 
 picks = [i for i in picks if i < frameCount]
 
 
+
+save_frame_dir = './test_save_load_frame/'
+
+
+# try:
+# 	shutil.rmtree(save_frame_dir)
+# except:
+# 	pass
+# os.mkdir(save_frame_dir)
+
+# save_frame(picks, video_path, save_frame_dir)
+
+
+
 frames, features = extract_frame_and_features4video(model_func, preprocess_func, target_size, picks, video_path)
+frames2 = load_saved_frame(save_frame_dir)
 
-os.remove(output_path)
-with h5py.File(output_path, 'w') as h5file:
-  h5file.create_dataset('frames', data = frames) 
-  h5file.create_dataset('features', data = features) 
-
+cv2.imwrite('loaded.png', frames2[0])
+cv2.imwrite('extracted.png', frames[0])
+print (len(frames2) == len(frames))
 
 quit()
 features = extract_features4video(model_func, preprocess_func, target_size, picks, video_path)
@@ -63,6 +77,7 @@ features = extract_features4video(model_func, preprocess_func, target_size, pick
 
 
 print(changepoints, nfps, picks, features, sep = '\n')
+
 
 
 aonet = AONet()
@@ -88,10 +103,10 @@ print(sum(summary), len(summary))
 sum_video_path = "/current/tmp/"
 
 try:
-  import shutil
-  shutil.rmtree(sum_video_path)
+	
+	shutil.rmtree(sum_video_path)
 except:
-  pass
+	pass
 
 
 os.mkdir(sum_video_path)

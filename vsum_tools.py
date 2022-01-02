@@ -438,18 +438,15 @@ def extract_frame_and_features4video(model_func, preprocess_func, target_size, p
 			# convert it from BGR to RGB
 			# ordering, resize the frame to a fixed target_size, and then
 			# perform mean subtraction
+			frame_before_converting.append(frame)
 			frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 			frame = cv2.resize(frame, target_size).astype("float32")
-			frame_before_converting.append(frame)
 			img_array = image.img_to_array(frame)
 			expanded_img_array = np.expand_dims(img_array, axis=0)
 			preprocessed_img = preprocess_func(expanded_img_array)
 			pick_frames.append(preprocessed_img)
 			
-			# print(n_frames)
-			# debug only
-			#if(count>10):
-			#  break
+		 
 	extract_frame_time = time.time()
 
 	print(f"Extracting frame linearly using opencv took {extract_frame_time - start:.2f} seconds")
@@ -466,3 +463,54 @@ def extract_frame_and_features4video(model_func, preprocess_func, target_size, p
 
 
 	return frame_before_converting, features
+
+
+def save_frame( picks, video_file, dest_dir):
+	
+	pick_frames = []
+
+	n_frames = -1
+
+	vs = cv2.VideoCapture(video_file)
+
+
+	total = len(picks)
+	count = 0
+
+	import time
+	start = time.time()
+
+	selected_frame = picks[count]
+	frame_before_converting = []
+
+	while True:
+		# read the next frame from the file
+		(grabbed, frame) = vs.read()
+		# if the frame was not grabbed, then we have reached the end of the stream
+		if not grabbed:
+			break
+
+		n_frames += 1
+
+		#if (n_frames in picks): // banana code - làm chậm 10 lần
+		if( selected_frame == n_frames):
+			count += 1
+			if(count < total):
+				selected_frame = picks[count]
+			if(count % 50 == 0):
+				print("-- Processing frame ", count, "/", total, ": ", n_frames)
+			# convert it from BGR to RGB
+			# ordering, resize the frame to a fixed target_size, and then
+			# perform mean subtraction
+
+			cv2.imwrite(f"{dest_dir}/frame_{n_frames:06d}.png", frame)
+		
+def load_saved_frame(dest_dir):
+	import glob
+	files = sorted( glob.glob(f"{dest_dir}/frame_*.png") )
+
+	frames = []
+	for i in files:
+		frames.append(cv2.imread(i))
+
+	return frames
