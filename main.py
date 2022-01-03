@@ -21,7 +21,7 @@ import sys
 # new_h5 = h5py.File('test.h5', 'w')
 
 video_path = f"/current/{sys.argv[1]}"
-output_path = f"/current/{sys.argv[2]}"
+# output_path = f"/current/{sys.argv[2]}"
 
 video = cv2.VideoCapture(video_path)
 
@@ -54,21 +54,21 @@ picks = [i for i in picks if i < frameCount]
 save_frame_dir = './test_save_load_frame/'
 
 
-# try:
-# 	shutil.rmtree(save_frame_dir)
-# except:
-# 	pass
-# os.mkdir(save_frame_dir)
+try:
+	shutil.rmtree(save_frame_dir)
+except:
+	pass
+os.mkdir(save_frame_dir)
 
-# save_frame(picks, video_path, save_frame_dir)
+save_frame(picks, video_path, save_frame_dir)
 
 
 
 frames, features = extract_frame_and_features4video(model_func, preprocess_func, target_size, picks, video_path)
 frames2 = load_saved_frame(save_frame_dir)
 
-cv2.imwrite('loaded.png', frames2[0])
-cv2.imwrite('extracted.png', frames[0])
+# cv2.imwrite('loaded.png', frames2[0])
+# cv2.imwrite('extracted.png', frames[0])
 print (len(frames2) == len(frames))
 
 quit()
