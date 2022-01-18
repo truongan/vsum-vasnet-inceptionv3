@@ -1,2 +1,5 @@
 test_save_load_frame/
+tmp/
+individual_frames_and_generated_summary/
+*_output/
 __pycache__/

@@ -4,7 +4,7 @@
 from vsum_tools import *
 from vasnet import *
 import shutil
-
+import os 
 segment_length = 2 #in seconds
 
 sampling_rate = 2 #in frame per second
@@ -22,6 +22,8 @@ import sys
 
 video_path = f"/current/{sys.argv[1]}"
 # output_path = f"/current/{sys.argv[2]}"
+
+video_basename = os.path.basename(video_path) 
 
 video = cv2.VideoCapture(video_path)
 
@@ -51,28 +53,28 @@ picks = [i for i in picks if i < frameCount]
 
 
 
-save_frame_dir = './test_save_load_frame/'
+# save_frame_dir = f"/current/{video_basename}_output/"
 
 
-try:
-	shutil.rmtree(save_frame_dir)
-except:
-	pass
-os.mkdir(save_frame_dir)
+# try:
+# 	shutil.rmtree(save_frame_dir)
+# except:
+# 	pass
+# os.mkdir(save_frame_dir)
 
-save_frame(picks, video_path, save_frame_dir)
+# save_frame(picks, video_path, save_frame_dir)
 
 
 
 frames, features = extract_frame_and_features4video(model_func, preprocess_func, target_size, picks, video_path)
-frames2 = load_saved_frame(save_frame_dir)
+# frames2 = load_saved_frame(save_frame_dir)
 
 # cv2.imwrite('loaded.png', frames2[0])
 # cv2.imwrite('extracted.png', frames[0])
-print (len(frames2) == len(frames))
+# print (len(frames2) == len(frames))
 
-quit()
-features = extract_features4video(model_func, preprocess_func, target_size, picks, video_path)
+# quit()
+# features = extract_features4video(model_func, preprocess_func, target_size, picks, video_path)
 
 
 
@@ -100,7 +102,7 @@ print(sum(summary), len(summary))
 # sum_video_name = 'video.mp4'
 
 
-sum_video_path = "/current/tmp/"
+sum_video_path = f"/current/{video_basename}_output/"
 
 try:
 	
