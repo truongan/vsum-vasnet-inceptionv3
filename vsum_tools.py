@@ -214,17 +214,23 @@ def generate_summary_video(video_path, sum_video_path, summary):
 	success, frame = video.read()  
 	index = 0
 	choosen = 0
+
+	
 	while success :  
-		print(sum_video_path + "/%d.png"%index)
 		if summary[index] == 1:
-			cv2.imwrite(sum_video_path + "/frame-%s.png"%(padding(choosen)), frame)
+			cv2.imwrite(sum_video_path + "/selected_frame-%s.png"%(padding(choosen)), frame)
+			# print(index, end=' ', )
 			choosen += 1
 		success, frame = video.read()
 		index += 1
 
-	print(sum_video_path)
+	# print(f"Generating sum_video_path)
 	
-	os.system(f"cd {sum_video_path} ; ffmpeg -f image2 -framerate {fps} -i frame-%06d.png -s {size_param} -c:v h264 {sum_video_path}/summary.mp4")
+	os.system(f"cd {sum_video_path} ; ffmpeg -f image2 -framerate {fps} -i selected_frame-%06d.png -s {size_param} -c:v h264 {sum_video_path}/summary.mp4")
+	
+	#Remove selected frame after generate summary
+	os.system(f"cd {sum_video_path} ; rm selected_frame*.png")
+
 
 # https://www.tensorflow.org/api_docs/python/tf/keras/applications
 # https://keras.io/api/applications/

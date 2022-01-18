@@ -76,9 +76,10 @@ frames, features = extract_frame_and_features4video(model_func, preprocess_func,
 # quit()
 # features = extract_features4video(model_func, preprocess_func, target_size, picks, video_path)
 
+# for i in frames:
+	
 
-
-print(changepoints, nfps, picks, features, sep = '\n')
+# print(changepoints, nfps, picks, features, sep = '\n')
 
 
 
@@ -93,16 +94,18 @@ threshold = 0.5
 
 summary = generate_summary(predict, np.array(changepoints), int(frameCount),nfps, picks)
 
-print(summary)
-print(sum(summary), len(summary))
+# print(summary)
+# print(sum(summary), len(summary))
 
 
-
+print("The following frames will be selected into summary ", [i for i in range(len(summary)) if (summary[i] == 1) ])
 
 # sum_video_name = 'video.mp4'
 
 
 sum_video_path = f"/current/{video_basename}_output/"
+sampled_frame_dir = f"{sum_video_path}/save_frame"
+
 
 try:
 	
@@ -111,6 +114,20 @@ except:
 	pass
 
 
+
+
 os.mkdir(sum_video_path)
+os.mkdir(sampled_frame_dir)
+
+for i in range(len(frames))	:
+	cv2.imwrite(f"{sampled_frame_dir}/frame_pos_{picks[i]}.png", frames[i])
+
+new_h5 = h5py.File(f"{sum_video_path}/metadata.h5", 'w')
+new_h5.create_dataset('changepoints', data=changepoints)
+new_h5.create_dataset('predict', data=predict)
+new_h5.create_dataset('picks', data=picks)
+new_h5.create_dataset('nfs', data=nfps)
+new_h5.create_dataset('generated_summary', data=summary)
+new_h5.close()
 
 generate_summary_video(video_path, sum_video_path, summary)
