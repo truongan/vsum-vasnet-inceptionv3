@@ -162,12 +162,14 @@ import argparse
 
 parser = argparse.ArgumentParser(description='Generate json from video or read json file to predict segment important score')
 
-parser.add_argument(['--out', '-o'], dest='accumulate', action='store_const',
-                    const=sum, default=max,
-                    help='Output json file to write data')
-                  
-parser.add_argument(['--in', '-i'], dest='accumulate', action='store_const',
-                    const=sum, default=max,
-                    help='The input video (if out argument is NOT empty) or the input video path if --out is missing')
+parser.add_argument('--create','-c', dest='create_json', action='store_const',
+                    const=sum, default=False,
+                    help='Output json file to write data', required=False)
+parser.add_argument('file_name', metavar='file_name', type=str, 
+                    help='an integer for the accumulator')
+# parser.add_argument('--in', '-i', dest='accumulate', action='store_const',
+#                     const=sum, default=max,
+#                     help='The input video (if out argument is NOT empty) or the input video path if --out is missing')
 
-argparse.parse_args(argv))
+a = parser.parse_args()
+print(a)
