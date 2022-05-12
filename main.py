@@ -17,6 +17,11 @@ import h5py
 import cv2
 import sys
 
+
+import time 
+
+start = time.time()
+total_time = 0
 # %rm test.h5
 # new_h5 = h5py.File('test.h5', 'w')
 
@@ -26,6 +31,7 @@ video_path = f"/current/{sys.argv[1]}"
 video_basename = os.path.basename(video_path) 
 
 video = cv2.VideoCapture(video_path)
+
 
 got, frame = video.read()
 print(got)
@@ -52,21 +58,18 @@ while True:
 picks = [i for i in picks if i < frameCount]
 
 
+tmp_total = time.time() - start
+print(f"---Caculating picks and change points for 2s segments took {tmp_total - total_time} second(s)")
+total_time = tmp_total
 
-# save_frame_dir = f"/current/{video_basename}_output/"
-
-
-# try:
-# 	shutil.rmtree(save_frame_dir)
-# except:
-# 	pass
-# os.mkdir(save_frame_dir)
-
-# save_frame(picks, video_path, save_frame_dir)
 
 
 
 frames, features = extract_frame_and_features4video(model_func, preprocess_func, target_size, picks, video_path)
+
+tmp_total = time.time() - start
+print(f"---Sampling frames, saving sampled frame and extract feature took {tmp_total - total_time} second(s)")
+total_time = tmp_total
 # frames2 = load_saved_frame(save_frame_dir)
 
 # cv2.imwrite('loaded.png', frames2[0])
@@ -92,13 +95,17 @@ predict = aonet.eval(features)
 # print(p)
 threshold = 0.5
 
+
 summary = generate_summary(predict, np.array(changepoints), int(frameCount),nfps, picks)
 
+tmp_total = time.time() - start
+print(f"---Predicting important score and calculate summary took {tmp_total - total_time} second(s)")
+total_time = tmp_total
 # print(summary)
 # print(sum(summary), len(summary))
 
 
-print("The following frames will be selected into summary ", [i for i in range(len(summary)) if (summary[i] == 1) ])
+# print("The following frames will be selected into summary ", [i for i in range(len(summary)) if (summary[i] == 1) ])
 
 # sum_video_name = 'video.mp4'
 
@@ -131,3 +138,8 @@ new_h5.create_dataset('generated_summary', data=summary)
 new_h5.close()
 
 generate_summary_video(video_path, sum_video_path, summary)
+
+
+tmp_total = time.time() - start
+print(f"---Extracting frames and stitching them into summary video took {tmp_total - total_time} second(s)")
+total_time = tmp_total
