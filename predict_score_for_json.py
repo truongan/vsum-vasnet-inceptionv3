@@ -158,3 +158,16 @@ def extract_features_from_images(model_func, preprocess_func, target_size, image
 
   return features
 
+import argparse
+
+parser = argparse.ArgumentParser(description='Generate json from video or read json file to predict segment important score')
+
+parser.add_argument(['--out', '-o'], dest='accumulate', action='store_const',
+                    const=sum, default=max,
+                    help='Output json file to write data')
+                  
+parser.add_argument(['--in', '-i'], dest='accumulate', action='store_const',
+                    const=sum, default=max,
+                    help='The input video (if out argument is NOT empty) or the input video path if --out is missing')
+
+argparse.parse_args(argv))
