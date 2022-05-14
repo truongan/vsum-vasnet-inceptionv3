@@ -1,6 +1,6 @@
 FROM tensorflow/tensorflow:2.7.1
 
-# COPY tvsum_splits_1_0.6187176441788906.tar.pth.tar /working/model.pth.tar
+COPY tvsum_splits_1_0.6187176441788906.tar.pth.tar /working/model.pth.tar
 # COPY *.py /working/
 
 RUN pip install ortools

@@ -1,6 +1,8 @@
 #command to start docker: docker run -it --rm --gpus all --device /dev/nvidia0  --device /dev/nvidia-modeset --device /dev/nvidiactl -u $(id -u):$(id -g) -v `pwd`:/current truongan/uit-vsum:1.0 bash
 #command to run in docker: python /current/main.py OieROrpzYuo.mp4 output.h5
 
+import sys
+
 from vsum_tools import *
 from vasnet import *
 import shutil
@@ -11,11 +13,7 @@ sampling_rate = 2 #in frame per second
 model_root_dir = '/working'
 model_file_path = model_root_dir + '/model.pth.tar'
 
-model_func, preprocess_func, target_size = model_picker('inceptionv3', 'max')
-import h5py
 
-import cv2
-import sys
 
 def generate_json(video_path):  
   import cv2
@@ -26,7 +24,9 @@ def generate_json(video_path):
   sampling_rate = 2
 
   got, frame = video.read()
-  print(got)
+  if ( not got):
+    print(f"Cant read video from {video_path}", file=sys.stderr)
+    return
 
   fps = (video.get(cv2.CAP_PROP_FPS))
   frameCount = video.get(cv2.CAP_PROP_FRAME_COUNT)
@@ -35,7 +35,6 @@ def generate_json(video_path):
   # padding = lambda i: '0'*(6-len(str(i))) + str(i)
 
   print(fps, frameCount, size)
-
 
   changepoints = [(i, i+ int(segment_length*fps)-1) for i in range(0, int(frameCount), int(segment_length*fps))]
   picks = []
@@ -162,14 +161,43 @@ import argparse
 
 parser = argparse.ArgumentParser(description='Generate json from video or read json file to predict segment important score')
 
-parser.add_argument('--create','-c', dest='create_json', action='store_const',
-                    const=sum, default=False,
-                    help='Output json file to write data', required=False)
+parser.add_argument('--save_json','-e', dest='save_json_file', 
+                    help='Extract frame from the video and save it into a json file. If this argument is given, the file_name argument is expected to be a video file', required=False)
+parser.add_argument('--save_score','-c', dest='save_score_file', 
+                    help='Read extract frame from json file, predict each frame important score and save those score in another json file. This is default action when save_json argument is not given', required=False)
 parser.add_argument('file_name', metavar='file_name', type=str, 
-                    help='an integer for the accumulator')
+                    help='This is either a video file or json file, depend on other options')
 # parser.add_argument('--in', '-i', dest='accumulate', action='store_const',
 #                     const=sum, default=max,
 #                     help='The input video (if out argument is NOT empty) or the input video path if --out is missing')
 
-a = parser.parse_args()
-print(a)
+argument = parser.parse_args()
+print(argument, file=sys.stderr)
+
+if (argument.save_json_file != None):
+  a = generate_json(argument.file_name)
+  with open(argument.save_json_file, 'w') as f:
+    f.write(a)
+
+else:
+  model_func, preprocess_func, target_size = model_picker('inceptionv3', 'max')
+  import json
+  with open(argument.file_name, 'r') as f:  inp = json.load(f)
+  import h5py
+
+  import cv2
+  import sys
+  features = extract_features_from_images(model_func, preprocess_func, target_size, inp['Images'])
+  
+  aonet = AONet()
+
+  aonet.initialize(f_len = len(features[0]))
+  aonet.load_model(model_file_path)
+  print("load model successfull")
+  predict = aonet.eval(features)
+
+  try:
+    with open(argument.save_score_file, 'w') as f:
+      print(predict, file=f)
+  except:
+    print(predict)
