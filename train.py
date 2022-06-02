@@ -2,7 +2,7 @@
 #command to run in docker: python /current/main.py OieROrpzYuo.mp4 output.h5
 
 from vsum_tools import *
-from vasnet import *
+from vasnet_with_training import *
 import shutil
 import os 
 
@@ -24,30 +24,7 @@ import h5py
 import json
 import torch.nn.init as init
 
-def parse_splits_filename(splits_filename):
-    # Parse split file and count number of k_folds
-    spath, sfname = os.path.split(splits_filename)
-    sfname, _ = os.path.splitext(sfname)
-    dataset_name = sfname.split('_')[0]  # Get dataset name e.g. tvsum
-    dataset_type = sfname.split('_')[1]  # augmentation type e.g. aug
 
-    # The keyword 'splits' is used as the filename fields terminator from historical reasons.
-    if dataset_type == 'splits':
-        # Split type is not present
-        dataset_type = ''
-
-    # Get number of discrete splits within each split json file
-    with open(splits_filename, 'r') as sf:
-        splits = json.load(sf)
-
-    return dataset_name, dataset_type, splits
-
-def weights_init(m):
-    classname = m.__class__.__name__
-    if classname == 'Linear':
-        init.xavier_uniform_(m.weight, gain=np.sqrt(2.0))
-        if m.bias is not None:
-            init.constant_(m.bias, 0.1)
 
 def train(hps, f_len = 2048):
     os.makedirs(hps.output_dir, exist_ok=True)
@@ -118,6 +95,7 @@ parser.add_argument('-r', '--root', type=str, default='', help="Project root dir
 parser.add_argument('-d', '--datasets', type=str, help="Path to a comma separated list of h5 datasets")
 parser.add_argument('-s', '--splits', type=str, help="Comma separated list of split files.")
 parser.add_argument('-t', '--train', action='store_true', help="Train")
+parser.add_argument('-c', '--use_cuda', action='store_true', default=False, help="Use CUDA")
 parser.add_argument('-v', '--verbose', action='store_true', help="Prints out more messages")
 parser.add_argument('-o', '--output-dir', type=str, default='data', help="Experiment name")
 
