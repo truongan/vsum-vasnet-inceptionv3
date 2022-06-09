@@ -446,7 +446,7 @@ class AONet:
                 print("Epoch: {0:6}".format(str(epoch)+"/"+str(self.hps.epochs_max)), end='') #AN EDIT: only report for every 50 epoch
                 print("   Train loss: {0:.05f}".format(np.mean(avg_loss[:, 0])), end='')  #AN EDIT: only report for every 50 epoch
                 print('   Test F-score avg/max: {0:0.5}/{1:0.5}'.format(val_fscore, max_val_fscore))  #AN EDIT: only report for every 50 epoch
-                print(f"{epoch - elapsed_epoch} epochs in {time.perf_counter() - start} seconds, {(time.perf_counter() - start)/(epoch - elapsed_epoch)} seconds per epoch")
+                print(f"{epoch - elapsed_epoch} in {time.perf_counter() - start} seconds, {(time.perf_counter() - start)/(epoch - elapsed_epoch)} seconds per epoch")
                 elapsed_epoch = epoch
                 start = time.perf_counter()
 

@@ -3,3 +3,5 @@ tmp/
 individual_frames_and_generated_summary/
 *_output/
 __pycache__/
+*.pth.tar
+*.tar.pth
