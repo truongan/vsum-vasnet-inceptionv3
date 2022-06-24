@@ -110,10 +110,11 @@ from torch.autograd import Variable
 
 
 def train_wrapper(split_file):
+  from datetime import datetime
   sys.argv = "main.py "
   sys.argv += '-c '
   sys.argv += '-d ' + 'for.training/merged.tvsum.summe-inceptionv3_avg.h5.h5'
-  sys.argv += '  -o ' + f"for.training/vasnet_retrain_{os.path.basename(split_file)}/"
+  sys.argv += '  -o ' + f"for.training/vasnet_retrain_{os.path.basename(split_file)}-{str(datetime.now()).replace(' ', 'T')}/"
   sys.argv += '  -s ' + split_file
   sys.argv = sys.argv.split()
 

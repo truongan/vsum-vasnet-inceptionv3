@@ -1,6 +1,0 @@
-for.training/tvsum_augmentation_splits.json, 0, 0.6299323301787437, 123
-for.training/tvsum_augmentation_splits.json, 1, 0.6527755009822622, 102
-for.training/tvsum_augmentation_splits.json, 2, 0.6119108345859139, 208
-for.training/tvsum_augmentation_splits.json, 3, 0.646368151863137, 157
-for.training/tvsum_augmentation_splits.json, 4, 0.5986874986651124, 217
-for.training/tvsum_augmentation_splits.json, avg, 0.6279348632550339

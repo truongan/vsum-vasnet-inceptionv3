@@ -98,8 +98,11 @@ class VASNet(nn.Module):
 		#self.kd = nn.Linear(in_features=self.ka.out_features, out_features=1)
 
 		self.ka = nn.Linear(in_features=self.m, out_features=self.m)
-		self.kb = nn.Linear(in_features=self.ka.out_features, out_features=self.m)
-		self.kc = nn.Linear(in_features=self.kb.out_features, out_features=self.m)
+
+        # Hình như bỏ 2 hàng này nó cũng chạy thì phải
+		# self.kb = nn.Linear(in_features=self.ka.out_features, out_features=self.m)
+		# self.kc = nn.Linear(in_features=self.kb.out_features, out_features=self.m)
+
 		self.kd = nn.Linear(in_features=self.ka.out_features, out_features=1)
 
 		self.sig = nn.Sigmoid()

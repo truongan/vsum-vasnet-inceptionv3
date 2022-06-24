@@ -5,3 +5,4 @@ individual_frames_and_generated_summary/
 __pycache__/
 *.pth.tar
 *.tar.pth
+*vasnet_retrain*
