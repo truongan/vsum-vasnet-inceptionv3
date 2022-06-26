@@ -1,0 +1,3 @@
+[submodule "AC-SUM-GAN"]
+	path = AC-SUM-GAN
+	url = https://github.com/e-apostolidis/AC-SUM-GAN
