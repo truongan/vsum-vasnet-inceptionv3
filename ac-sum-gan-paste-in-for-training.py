@@ -32,7 +32,7 @@ from pathlib import Path
 import pprint
 import math
 
-save_dir = Path('ac-sum-gan-retrain/')
+# save_dir = Path('ac-sum-gan-retrain/')
 
 def str2bool(v):
     """string to boolean"""
@@ -52,9 +52,16 @@ class Config(object):
 
         self.termination_point = math.floor(0.15*self.action_state_size)
         self.set_dataset_dir(self.video_type)
+    
+    def set_dataset_dir(self, video_type='TVSum'):
+        dir = Path(self.output_dir)
+        self.log_dir = dir.joinpath(video_type, 'logs/split' + str(self.split_index))
+        self.score_dir = dir.joinpath(video_type, 'results/split' + str(self.split_index))
+        self.save_dir = dir.joinpath(video_type, 'models/split' + str(self.split_index))
+        for i in [self.log_dir, self.score_dir, self.save_dir]:
+            i.mkdir(parents=True, exist_ok=True)
 
-
-def __repr__(self):
+    def __repr__(self):
         """Pretty-print configurations in alphabetical order"""
         config_str = 'Configurations\n'
         config_str += pprint.pformat(self.__dict__)
@@ -184,13 +191,7 @@ class Discriminator(nn.Module):
         prob = self.out(h).squeeze()
 
         return h, prob
-                                                                                                                                                                                                   
-                                                                                                                                                                                                                     
-                                                                                                                                                                                                                     
-                                                                                                                                                                                                                     
-                                                                                                                                                                                                                     
-
-                                                                                                                                                              
+                                                                                                                                  
                                                                                                                                                                                           
 #     ssssssssss   uuuuuu    uuuuuu     mmmmmmm    mmmmmmm      mmmmmmm    mmmmmmm     aaaaaaaaaaaaa   rrrrr   rrrrrrrrr   iiiiiii zzzzzzzzzzzzzzzzz    eeeeeeeeeeee    rrrrr   rrrrrrrrr   
 #   ss::::::::::s  u::::u    u::::u   mm:::::::m  m:::::::mm  mm:::::::m  m:::::::mm   a::::::::::::a  r::::rrr:::::::::r  i:::::i z:::::::::::::::z  ee::::::::::::ee  r::::rrr:::::::::r  
@@ -463,6 +464,9 @@ import numpy as np
 import json
 from tqdm import tqdm, trange
 from pathlib import Path
+import torch.nn as nn
+import torch.nn.functional as F
+from torch.distributions import Categorical
 
 # from layers import Summarizer, Discriminator
 # from utils import TensorboardWriter
@@ -982,7 +986,8 @@ class Solver(object):
             self.writer.update_loss(reward, epoch_i, 'reward_epoch')
 
             # Save parameters at checkpoint
-            ckpt_path = str(self.config.save_dir) + f'/epoch-{epoch_i}.pkl'
+            ckpt_path = self.config.save_dir.joinpath(f'/epoch-{epoch_i}.pkl')
+            ckpt_path.touch(exist_ok=True)
             if self.config.verbose:
                 tqdm.write(f'Save parameters at {ckpt_path}')
             torch.save(self.model.state_dict(), ckpt_path)
@@ -1013,13 +1018,15 @@ class Solver(object):
 
                 out_dict[video_name] = scores
 
+            self.config.score_dir.mkdir(parents=True, exist_ok= True)
             score_save_path = self.config.score_dir.joinpath(
                 f'{self.config.video_type}_{epoch_i}.json')
+            score_save_path.touch(mode=0x777, exist_ok=True)
+            # if not os.path.exists(score_save_path): os.makedirs(score_save_path)
             with open(score_save_path, 'w') as f:
                 if self.config.verbose:
                     tqdm.write(f'Saving score at {str(score_save_path)}.')
                 json.dump(out_dict, f)
-            score_save_path.chmod(0o777)
             
                                                                                                                                                                                                               
 #             dddddddd                                                                                                                   dddddddd                                        
@@ -1097,23 +1104,27 @@ def compute_fragments(seq_len, action_state_size):
     return action_fragments
 
 class VideoData(Dataset):
-    def __init__(self, mode, split_index, action_state_size):
-        self.mode = mode
-        self.name = 'tvsum'
-        self.datasets = ['../data/SumMe/eccv16_dataset_summe_google_pool5.h5',
-                         '../data/TVSum/eccv16_dataset_tvsum_google_pool5.h5']
-        self.splits_filename = ['../data/splits/' + self.name + '_splits.json']
-        self.split_index = split_index # it represents the current split (varies from 0 to 4)
+    def __init__(self, config):
+    # def __init__(self, mode, split_index, action_state_size):
+        self.mode = config.mode
+        # self.name = 'tvsum'
+        # self.datasets = ['../data/SumMe/eccv16_dataset_summe_google_pool5.h5',
+        #                  '../data/TVSum/eccv16_dataset_tvsum_google_pool5.h5']
+        # self.splits_filename = ['../data/splits/' + self.name + '_splits.json']
 
-        if 'summe' in self.splits_filename[0]:
-            self.filename = self.datasets[0]
-        elif 'tvsum' in self.splits_filename[0]:
-            self.filename = self.datasets[1]
-        hdf = h5py.File(self.filename, 'r')
+
+        
+        self.split_index = config.split_index # it represents the current split (varies from 0 to 4)
+
+        # if 'summe' in self.splits_filename[0]:
+        #     self.filename = self.datasets[0]
+        # elif 'tvsum' in self.splits_filename[0]:
+        #     self.filename = self.datasets[1]
+        hdf = h5py.File(config.data_file, 'r')
         self.action_fragments = {}
         self.list_features = []
 
-        with open(self.splits_filename[0]) as f:
+        with open(config.split_file) as f:
             data = json.loads(f.read())
             for i, split in enumerate(data):
                 if i==self.split_index:
@@ -1122,7 +1133,7 @@ class VideoData(Dataset):
         for video_name in self.split[self.mode + '_keys']:
             features = torch.Tensor(np.array(hdf[video_name + '/features']))
             self.list_features.append(features)
-            self.action_fragments[video_name] = compute_fragments(features.shape[0], action_state_size)
+            self.action_fragments[video_name] = compute_fragments(features.shape[0], config.action_state_size)
 
         hdf.close()
 
@@ -1140,12 +1151,12 @@ class VideoData(Dataset):
         else:
             return frame_features, self.action_fragments[video_name]
 
-def get_loader(mode, split_index, action_state_size):
-    if mode.lower() == 'train':
-        vd = VideoData(mode, split_index, action_state_size)
+def get_loader(config):
+    if config.mode.lower() == 'train':
+        vd = VideoData(config)
         return DataLoader(vd, batch_size=1, shuffle=True)
     else:
-        return VideoData(mode, split_index, action_state_size)
+        return VideoData(config)
                                                    
                                                                     
 #                                             iiii                    
@@ -1167,16 +1178,25 @@ def get_loader(mode, split_index, action_state_size):
                                                                     
 
 import json                                                        
-
+import os
 if __name__ == '__main__':
-    config = get_config(mode='train')
-    test_config = get_config(mode='test')
-
-    print(json.dumps(config))
+    config = get_config(mode='train'
+        , data_file='for.training/datasets/eccv16_dataset_tvsum_google_pool5.h5'
+        , split_file = 'for.training/datasets/tvsum_canonical_splits.json'
+    )
+    test_config = get_config(
+        mode='test'
+        , data_file='for.training/datasets/eccv16_dataset_tvsum_google_pool5.h5'
+        , split_file = 'for.training/datasets/tvsum_canonical_splits.json'
+    )
+    
+    print(config)
     print(test_config)
 
-    train_loader = get_loader(config.mode, config.split_index, config.action_state_size)
-    test_loader = get_loader(test_config.mode, test_config.split_index, test_config.action_state_size)
+    if not os.path.exists(config.output_dir): os.makedirs(config.output_dir)
+
+    train_loader = get_loader(config)
+    test_loader = get_loader(test_config)
     solver = Solver(config, train_loader, test_loader)
 
     solver.build()

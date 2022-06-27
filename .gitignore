@@ -6,3 +6,4 @@ __pycache__/
 *.pth.tar
 *.tar.pth
 *vasnet_retrain*
+ac-sum-gan-retrain*

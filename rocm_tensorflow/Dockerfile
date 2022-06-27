@@ -11,6 +11,8 @@ RUN pip install tabulate
 RUN pip install pandas
 RUN pip install sklearn
 RUN pip install psutil
+RUN pip install tqdm
+RUN pip install tensorboardX
 
 
 RUN apt update && apt install -y ffmpeg parallel 
