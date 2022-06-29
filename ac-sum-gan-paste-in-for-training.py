@@ -29,6 +29,7 @@
 
 import argparse
 from pathlib import Path
+import sys
 import pprint
 import math
 
@@ -1010,7 +1011,7 @@ class Solver(object):
             seq_len = original_features.shape[0]
             
             with torch.no_grad():
-
+                # print("Try to find the warningp ", file=sys.stderr)
                 _, scores = self.AC(original_features, seq_len, action_fragments)
 
                 scores = scores.squeeze(1)
@@ -1183,11 +1184,13 @@ if __name__ == '__main__':
     config = get_config(mode='train'
         , data_file='for.training/datasets/eccv16_dataset_tvsum_google_pool5.h5'
         , split_file = 'for.training/datasets/tvsum_canonical_splits.json'
+        , verbose=False
     )
     test_config = get_config(
         mode='test'
         , data_file='for.training/datasets/eccv16_dataset_tvsum_google_pool5.h5'
         , split_file = 'for.training/datasets/tvsum_canonical_splits.json'
+        , verbose=False
     )
     
     print(config)
