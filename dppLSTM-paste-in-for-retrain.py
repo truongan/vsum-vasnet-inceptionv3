@@ -483,19 +483,19 @@ def load_data(data_dir = '../data/SOY/', dataset_testing = 'TVSum', model_type =
     
     train_set = [[], [], [], []]
     
-    [feature, label, weight] = load_dataset_h5(data_dir, 'OVP', model_type)
-    label_tmp = [numpy.where(l)[0].astype('int32') for l in label]
-    train_set[0].extend(feature)
-    train_set[1].extend(label)
-    train_set[2].extend(label_tmp)
-    train_set[3].extend(weight)
+    # [feature, label, weight] = load_dataset_h5(data_dir, 'OVP', model_type)
+    # label_tmp = [numpy.where(l)[0].astype('int32') for l in label]
+    # train_set[0].extend(feature)
+    # train_set[1].extend(label)
+    # train_set[2].extend(label_tmp)
+    # train_set[3].extend(weight)
 
-    [feature, label, weight] = load_dataset_h5(data_dir, 'Youtube', model_type)
-    label_tmp = [numpy.where(l)[0].astype('int32') for l in label]
-    train_set[0].extend(feature)
-    train_set[1].extend(label)
-    train_set[2].extend(label_tmp)
-    train_set[3].extend(weight)
+    # [feature, label, weight] = load_dataset_h5(data_dir, 'Youtube', model_type)
+    # label_tmp = [numpy.where(l)[0].astype('int32') for l in label]
+    # train_set[0].extend(feature)
+    # train_set[1].extend(label)
+    # train_set[2].extend(label_tmp)
+    # train_set[3].extend(weight)
 
     val_set = [[], [], [], []]
     val_idx = []
