@@ -8,8 +8,7 @@ import os
 segment_length = 2 #in seconds
 
 sampling_rate = 2 #in frame per second
-model_root_dir = '/working'
-model_file_path = model_root_dir + '/model.pth.tar'
+model_file_path = 'tvsum_splits_1_0.6187176441788906.tar.pth.tar'
 
 model_func, preprocess_func, target_size = model_picker('inceptionv3', 'max')
 import h5py

@@ -479,6 +479,12 @@ import numpy
 # replace float32 with float64
 import scipy.io as sio
 
+def extend_set(s, feature, label, label_tmp, weight):
+    s[0].extend(feature)
+    s[1].extend(label)
+    s[2].extend(label_tmp)
+    s[3].extend(weight)
+
 def load_data(data_dir = '../data/SOY/', dataset_testing = 'TVSum', model_type = 1):
     
     train_set = [[], [], [], []]
@@ -503,70 +509,47 @@ def load_data(data_dir = '../data/SOY/', dataset_testing = 'TVSum', model_type =
     te_idx = []
 
     if dataset_testing == 'TVSum':
-        [feature, label, weight] = load_dataset_h5(data_dir, 'TVSum', model_type)
+        [feature, label, weight] = load_dataset_h5('for.training/datasets/eccv16_dataset_tvsum_google_pool5.h5', model_type)
         label_tmp = [numpy.where(l)[0].astype('int32') for l in label]
-        test_set[0].extend(feature)
-        test_set[1].extend(label)
-        test_set[2].extend(label_tmp)
-        test_set[3].extend(weight)
+        extend_set(test_set, feature, label, label_tmp, weight)
         te_idx.extend(range(50))
         [feature, label, weight] = load_dataset_h5(data_dir, 'SumMe', model_type)
         label_tmp = [numpy.where(l)[0].astype('int32') for l in label]
         rand_idx = numpy.random.permutation(25)
         for i in xrange(25):
             if i <= 15:
-                train_set[0].append(feature[rand_idx[i]])
-                train_set[1].append(label[rand_idx[i]])
-                train_set[2].append(label_tmp[rand_idx[i]])
-                train_set[3].append(weight[rand_idx[i]])
+                add = train_set
             else:
-                val_set[0].append(feature[rand_idx[i]])
-                val_set[1].append(label[rand_idx[i]])
-                val_set[2].append(label_tmp[rand_idx[i]])
-                val_set[3].append(weight[rand_idx[i]])
+                add = val_set
                 val_idx.append(rand_idx[i])
+            extend_set(add, feature, label, label_tmp, weight)
+
 
     elif dataset_testing == 'SumMe':
         [feature, label, weight] = load_dataset_h5(data_dir, 'SumMe', model_type)
         label_tmp = [numpy.where(l)[0].astype('int32') for l in label]
-        test_set[0].extend(feature)
-        test_set[1].extend(label)
-        test_set[2].extend(label_tmp)
-        test_set[3].extend(weight)
+        extend_set(test_set, feature, label, label_tmp, weight)
+
         te_idx.extend(range(25))
         [feature, label, weight] = load_dataset_h5(data_dir, 'TVSum', model_type)
         label_tmp = [numpy.where(l)[0].astype('int32') for l in label]
         rand_idx = numpy.random.permutation(50)
         for i in xrange(50):
+            
             if i <= 30:
-                train_set[0].append(feature[rand_idx[i]])
-                train_set[1].append(label[rand_idx[i]])
-                train_set[2].append(label_tmp[rand_idx[i]])
-                train_set[3].append(weight[rand_idx[i]])
+                add = train_set
             else:
-                val_set[0].append(feature[rand_idx[i]])
-                val_set[1].append(label[rand_idx[i]])
-                val_set[2].append(label_tmp[rand_idx[i]])
-                val_set[3].append(weight[rand_idx[i]])
+                add = val_set
                 val_idx.append(rand_idx[i])
+            extend_set(add, feature, label, label_tmp, weight)
 
-    for i in xrange(len(train_set[0])):
-        train_set[0][i] = numpy.transpose(train_set[0][i])
-        train_set[1][i] = train_set[1][i].flatten().astype(float32)
-        train_set[2][i] = train_set[2][i].flatten().astype('int32')
-        train_set[3][i] = train_set[3][i]
 
-    for i in xrange(len(val_set[0])):
-        val_set[0][i] = numpy.transpose(val_set[0][i])
-        val_set[1][i] = val_set[1][i].flatten().astype(float32)
-        val_set[2][i] = val_set[2][i].flatten().astype('int32')
-        val_set[3][i] = val_set[3][i]
+    for s in [train_set, val_set, test_set]:
+        for i in xrange(len(train_set[0])):
+            s[0][i] = numpy.transpose(s[0][i])
+            s[1][i] = s[1][i].flatten().astype(float32)
+            s[2][i] = s[2][i].flatten().astype('int32')
 
-    for i in xrange(len(test_set[0])):
-        test_set[0][i] = numpy.transpose(test_set[0][i])
-        test_set[1][i] = test_set[1][i].flatten().astype(float32)
-        test_set[2][i] = test_set[2][i].flatten().astype('int32')
-        test_set[3][i] = test_set[3][i]
 
     return train_set, val_set, val_idx, test_set, te_idx
 
@@ -723,7 +706,7 @@ def inference(model_file, model_idx, test_set, test_dir, te_idx):
 
 if __name__ == '__main__':
 
-    dataset_testing = 'SumMe' # testing dataset: SumMe or TVSum
+    dataset_testing = 'TVSum' # testing dataset: SumMe or TVSum
     model_type = 2 # 1 for vsLSTM and 2 for dppLSTM, please refer to the readme file for more detail
     model_idx = 'dppLSTM_' + dataset_testing + '_' + model_type.__str__()
 
