@@ -425,13 +425,14 @@ def extract_frame_and_features4video(model_func, preprocess_func, target_size, p
 	selected_frame = picks[count]
 	frame_before_converting = []
 
+	
 	while True:
 		# read the next frame from the file
 		(grabbed, frame) = vs.read()
 		# if the frame was not grabbed, then we have reached the end of the stream
 		if not grabbed:
 			break
-
+		
 		n_frames += 1
 
 		#if (n_frames in picks): // banana code - làm chậm 10 lần

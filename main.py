@@ -38,10 +38,9 @@ print(got)
 fps = (video.get(cv2.CAP_PROP_FPS))
 frameCount = video.get(cv2.CAP_PROP_FRAME_COUNT)
 size = (int(video.get(cv2.CAP_PROP_FRAME_WIDTH)), int(video.get(cv2.CAP_PROP_FRAME_HEIGHT)))
-size_param = "%dx%d"%size 
 padding = lambda i: '0'*(6-len(str(i))) + str(i)
 
-print(fps, frameCount, size)
+print(fps, frameCount, "(width*height)=", size)
 
 changepoints = [(i, i+ int(segment_length*fps)-1) for i in range(0, int(frameCount), int(segment_length*fps))]
 nfps = [x[1] - x[0] + 1 for x in changepoints]
