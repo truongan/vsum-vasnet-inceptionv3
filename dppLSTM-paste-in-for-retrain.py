@@ -40,7 +40,7 @@ def adam_opt(model, train_set, valid_set, model_save_dir,
     lr_file = open(model_save_dir+'lr.txt', 'w')
     lr_file.write(str(lr))
     lr_file.close()
-    lr = theano.shared(numpy.array(lr).astype(theano.config.floatX))
+    lr = theano.shared(numpy.array(lr).astype('float64'))
 
     updates = []
     all_grads = theano.grad(model.costs[0], model.params)
@@ -53,9 +53,9 @@ def adam_opt(model, train_set, valid_set, model_save_dir,
 
     for p, g in zip(model.params, all_grads):
         m = theano.shared(
-            numpy.zeros(p.get_value().shape, dtype=theano.config.floatX))
+            numpy.zeros(p.get_value().shape, dtype='float64'))
         v = theano.shared(
-            numpy.zeros(p.get_value().shape, dtype=theano.config.floatX))
+            numpy.zeros(p.get_value().shape, dtype='float64'))
 
         m_t = (beta1_t * g) + ((1. - beta1_t) * m)
         v_t = (beta2 * g**2) + ((1. - beta2) * v)
@@ -81,9 +81,9 @@ def adam_opt(model, train_set, valid_set, model_save_dir,
     print( '... training with Adam optimizer')
     cap_count = 0
     train_cost = []
-    t0 = time.clock()
+    t0 = time.perf_counter()
     try:
-        for u in xrange(n_iters):
+        for u in range(n_iters):
             if u % 10 == 0:
                 # refresh lr
                 try:
@@ -93,7 +93,7 @@ def adam_opt(model, train_set, valid_set, model_save_dir,
                 except IOError:
                     pass
 
-            grads = [numpy.zeros_like(p).astype(theano.config.floatX) for p in model.params]
+            grads = [numpy.zeros_like(p).astype('float64') for p in model.params]
             mb_cost = []
             for i in train_set.iterate(True):
                 tmp = train_grad_f(*i)
@@ -115,10 +115,10 @@ def adam_opt(model, train_set, valid_set, model_save_dir,
                 angle = angle / numpy.pi * 180
                 p_last = p_now
                 delta_last = delta_now
-                t1 = time.clock()
+                t1 = time.perf_counter()
                 print ('period=%d, update=%d, mb_cost=[%.4f], |delta|=[%.2e], angle=[%.1f], lr=[%.6f], t=[%.2f]sec' % \
                       (u/valid_period, u, numpy.mean(train_cost), numpy.mean(abs(delta_now[0:10000])), angle, lr.get_value(), (t1-t0)))
-                t0 = time.clock()
+                t0 = time.perf_counter()
                 train_cost = []
 
             if u % valid_period == 0 and u > 0:
@@ -185,17 +185,19 @@ class mlp(object):
     1. create a new one from the given settings
     2. read the model parameters from a given file
     """
-    def __init__(self, layers=[-1, -1], model_file=None, layer_name='mlp', inputs=None, net_type='tanh'):
+    # def __init__(self, layers=[-1, -1], model_file=None, layer_name='mlp', inputs=None, net_type='tanh'):
+    def __init__(self, layers=[0, 0], model_file=None, layer_name='mlp', inputs=None, net_type='tanh'):
         self.layer_name = layer_name
         self.layers = layers
+        print(layers)
         # create a new model
         if model_file == None:
             self.W = []
             self.b = []
-            for i in xrange(len(layers)-1):
-                self.W.append(theano.shared(0.02 * numpy.random.uniform(-1.0, 1.0, (layers[i], layers[i+1])).astype(theano.config.floatX)))
+            for i in range(len(layers)-1):
+                self.W.append(theano.shared(0.02 * numpy.random.uniform(-1.0, 1.0, (layers[i], layers[i+1])).astype('float64')))
                 self.W[-1].name = self.layer_name + '_W' + str(i)
-                self.b.append(theano.shared(numpy.zeros(layers[i+1]).astype(theano.config.floatX)))
+                self.b.append(theano.shared(numpy.zeros(layers[i+1]).astype('float64')))
                 self.b[-1].name = self.layer_name + '_b' + str(i)
         # read from model_file
         else:
@@ -207,10 +209,10 @@ class mlp(object):
             i = 0
             while True:
                 if self.layer_name+'_W'+str(i) in f:
-                    self.W.append(theano.shared(numpy.array(f[self.layer_name+'_W'+str(i)]).astype(theano.config.floatX)))
+                    self.W.append(theano.shared(numpy.array(f[self.layer_name+'_W'+str(i)]).astype('float64')))
                     self.W[-1].name = self.layer_name + '_W' + str(i)
                     self.layers.append(self.W[-1].get_value().shape[0])
-                    self.b.append(theano.shared(numpy.array(f[self.layer_name+'_b'+str(i)]).astype(theano.config.floatX)))
+                    self.b.append(theano.shared(numpy.array(f[self.layer_name+'_b'+str(i)]).astype('float64')))
                     self.b[-1].name = self.layer_name + '_b' + str(i)
                     i += 1
                 else:
@@ -231,7 +233,7 @@ class mlp(object):
         def relu(x):
             return x * (x > 0)
 
-        for i in xrange(len(self.layers)-2):
+        for i in range(len(self.layers)-2):
             self.h.append(T.nnet.sigmoid(T.dot(self.h[i], self.W[i]) + self.b[i]))
 
         if net_type == 'tanh':
@@ -291,7 +293,8 @@ class summ_dppLSTM(object):
     """
     bidirectional LSTM units: h_backwards + h_forwards to MLP
     """
-    def __init__(self, nx=-1, nh=-1, nout=-1, model_file=None, layer_name='sumLSTM_bid', inputs=None):
+    # def __init__(self, nx=-1, nh=-1, nout=-1, model_file=None, layer_name='sumLSTM_bid', inputs=None):
+    def __init__(self, nx=0, nh=0, nout=0, model_file=None, layer_name='sumLSTM_bid', inputs=None):
         self.layer_name = layer_name
         # input video
         if inputs == None:
@@ -311,24 +314,24 @@ class summ_dppLSTM(object):
             self.c_init_mlp = mlp(layers=[nx, nh], layer_name='c_init_mlp', inputs=[T.mean(video, axis=0)], net_type='tanh')
             self.h_init_mlp = mlp(layers=[nx, nh], layer_name='h_init_mlp', inputs=[T.mean(video, axis=0)], net_type='tanh')
             # input gate
-            self.Wi = theano.shared(0.02 * numpy.random.uniform(-1.0, 1.0, (nx+nh, nh)).astype(theano.config.floatX))
+            self.Wi = theano.shared(0.02 * numpy.random.uniform(-1.0, 1.0, (nx+nh, nh)).astype('float64'))
             self.Wi.name = self.layer_name + '_Wi'
-            self.bi = theano.shared(0.02 * numpy.random.uniform(-1.0, 1.0, nh).astype(theano.config.floatX))
+            self.bi = theano.shared(0.02 * numpy.random.uniform(-1.0, 1.0, nh).astype('float64'))
             self.bi.name = self.layer_name + '_bi'
             # input modulator
-            self.Wc = theano.shared(0.02 * numpy.random.uniform(-1.0, 1.0, (nx+nh, nh)).astype(theano.config.floatX))
+            self.Wc = theano.shared(0.02 * numpy.random.uniform(-1.0, 1.0, (nx+nh, nh)).astype('float64'))
             self.Wc.name = self.layer_name + '_Wc'
-            self.bc = theano.shared(0.02 * numpy.random.uniform(-1.0, 1.0, nh).astype(theano.config.floatX))
+            self.bc = theano.shared(0.02 * numpy.random.uniform(-1.0, 1.0, nh).astype('float64'))
             self.bc.name = self.layer_name + '_bc'
             # forget gate
-            self.Wf = theano.shared(0.02 * numpy.random.uniform(-1.0, 1.0, (nx+nh, nh)).astype(theano.config.floatX))
+            self.Wf = theano.shared(0.02 * numpy.random.uniform(-1.0, 1.0, (nx+nh, nh)).astype('float64'))
             self.Wf.name = self.layer_name + '_Wf'
-            self.bf = theano.shared(0.02 * numpy.random.uniform(-1.0, 1.0, nh).astype(theano.config.floatX))
+            self.bf = theano.shared(0.02 * numpy.random.uniform(-1.0, 1.0, nh).astype('float64'))
             self.bf.name = self.layer_name + '_bf'
             # output gate
-            self.Wo = theano.shared(0.02 * numpy.random.uniform(-1.0, 1.0, (nx+nh, nh)).astype(theano.config.floatX))
+            self.Wo = theano.shared(0.02 * numpy.random.uniform(-1.0, 1.0, (nx+nh, nh)).astype('float64'))
             self.Wo.name = self.layer_name + '_Wo'
-            self.bo = theano.shared(0.02 * numpy.random.uniform(-1.0, 1.0, nh).astype(theano.config.floatX))
+            self.bo = theano.shared(0.02 * numpy.random.uniform(-1.0, 1.0, nh).astype('float64'))
             self.bo.name = self.layer_name + '_bo'
         # read from model_file
         else:
@@ -338,24 +341,24 @@ class summ_dppLSTM(object):
             self.c_init_mlp = mlp(model_file=model_file, layer_name='c_init_mlp', inputs=[T.mean(video, axis=0)], net_type='tanh')
             self.h_init_mlp = mlp(model_file=model_file, layer_name='h_init_mlp', inputs=[T.mean(video, axis=0)], net_type='tanh')
             # input gate
-            self.Wi = theano.shared(numpy.array(f[self.layer_name+'_Wi']).astype(theano.config.floatX))
+            self.Wi = theano.shared(numpy.array(f[self.layer_name+'_Wi']).astype('float64'))
             self.Wi.name = self.layer_name + '_Wi'
-            self.bi = theano.shared(numpy.array(f[self.layer_name+'_bi']).astype(theano.config.floatX))
+            self.bi = theano.shared(numpy.array(f[self.layer_name+'_bi']).astype('float64'))
             self.bi.name = self.layer_name + '_bi'
             # input modulator
-            self.Wc = theano.shared(numpy.array(f[self.layer_name+'_Wc']).astype(theano.config.floatX))
+            self.Wc = theano.shared(numpy.array(f[self.layer_name+'_Wc']).astype('float64'))
             self.Wc.name = self.layer_name + '_Wc'
-            self.bc = theano.shared(numpy.array(f[self.layer_name+'_bc']).astype(theano.config.floatX))
+            self.bc = theano.shared(numpy.array(f[self.layer_name+'_bc']).astype('float64'))
             self.bc.name = self.layer_name + '_bc'
             # forget gate
-            self.Wf = theano.shared(numpy.array(f[self.layer_name+'_Wf']).astype(theano.config.floatX))
+            self.Wf = theano.shared(numpy.array(f[self.layer_name+'_Wf']).astype('float64'))
             self.Wf.name = self.layer_name + '_Wf'
-            self.bf = theano.shared(numpy.array(f[self.layer_name+'_bf']).astype(theano.config.floatX))
+            self.bf = theano.shared(numpy.array(f[self.layer_name+'_bf']).astype('float64'))
             self.bf.name = self.layer_name + '_bf'
             # output gate
-            self.Wo = theano.shared(numpy.array(f[self.layer_name+'_Wo']).astype(theano.config.floatX))
+            self.Wo = theano.shared(numpy.array(f[self.layer_name+'_Wo']).astype('float64'))
             self.Wo.name = self.layer_name + '_Wo'
-            self.bo = theano.shared(numpy.array(f[self.layer_name+'_bo']).astype(theano.config.floatX))
+            self.bo = theano.shared(numpy.array(f[self.layer_name+'_bo']).astype('float64'))
             self.bo.name = self.layer_name + '_bo'
             # close the hdf5 model file
             f.close()
@@ -513,10 +516,10 @@ def load_data(data_dir = '../data/SOY/', dataset_testing = 'TVSum', model_type =
         label_tmp = [numpy.where(l)[0].astype('int32') for l in label]
         extend_set(test_set, feature, label, label_tmp, weight)
         te_idx.extend(range(50))
-        [feature, label, weight] = load_dataset_h5(data_dir, 'SumMe', model_type)
+        [feature, label, weight] = load_dataset_h5('for.training/datasets/merged.tvsum.summe_google_pool.h5', model_type)
         label_tmp = [numpy.where(l)[0].astype('int32') for l in label]
         rand_idx = numpy.random.permutation(25)
-        for i in xrange(25):
+        for i in range(25):
             if i <= 15:
                 add = train_set
             else:
@@ -534,7 +537,7 @@ def load_data(data_dir = '../data/SOY/', dataset_testing = 'TVSum', model_type =
         [feature, label, weight] = load_dataset_h5(data_dir, 'TVSum', model_type)
         label_tmp = [numpy.where(l)[0].astype('int32') for l in label]
         rand_idx = numpy.random.permutation(50)
-        for i in xrange(50):
+        for i in range(50):
             
             if i <= 30:
                 add = train_set
@@ -545,9 +548,9 @@ def load_data(data_dir = '../data/SOY/', dataset_testing = 'TVSum', model_type =
 
 
     for s in [train_set, val_set, test_set]:
-        for i in xrange(len(train_set[0])):
+        for i in range(len(s[0])):
             s[0][i] = numpy.transpose(s[0][i])
-            s[1][i] = s[1][i].flatten().astype(float32)
+            s[1][i] = s[1][i].flatten().astype('float64')
             s[2][i] = s[2][i].flatten().astype('int32')
 
 
@@ -559,11 +562,14 @@ def load_dataset_h5(file_name, label_type): #An EDIT: Don't hardcode file name i
     label = []
     weight = []
     f = h5py.File(file_name)
-    vid_ord = numpy.sort(numpy.array(f['/ord']).astype('int32').flatten())
-    for i in vid_ord:
-        feature.append(numpy.matrix(f['/fea_' + i.__str__()]).astype(float32))
-        label.append(numpy.array(f['/gt_' + label_type.__str__() + '_' + i.__str__()]).astype(float32).flatten())
-        weight.append(numpy.array(label_type - 1.0).astype(float32))
+    print(f)
+    for i in f:
+        i = f[i]
+        feature.append(i['features'][:])
+        label.append(i['gtscore'][:])
+        weight.append(numpy.array(label_type - 1.0).astype('float64'))
+
+        break
     f.close()
 
     return feature, label, weight
@@ -599,12 +605,12 @@ class SequenceDataset:
     self.number_batches = number_batches
     self.items = []
 
-    for i_sequence in xrange(len(data[0])):
+    for i_sequence in range(len(data[0])):
       if batch_size is None:
-        self.items.append([data[i][i_sequence] for i in xrange(len(data))])
+        self.items.append([data[i][i_sequence] for i in range(len(data))])
       else:
-        for i_step in xrange(0, len(data[0][i_sequence]) - minimum_size + 1, batch_size):
-          self.items.append([data[i][i_sequence][i_step:i_step + batch_size] for i in xrange(len(data))])
+        for i_step in range(0, len(data[0][i_sequence]) - minimum_size + 1, batch_size):
+          self.items.append([data[i][i_sequence][i_step:i_step + batch_size] for i in range(len(data))])
 
     self.shuffle()
 
@@ -612,7 +618,7 @@ class SequenceDataset:
     numpy.random.shuffle(self.items)
 
   def iterate(self, update=True):
-    for b in xrange(self.number_batches):
+    for b in range(self.number_batches):
       yield self.items[(self.current_batch + b) % len(self.items)]
     if update: self.update()
 
@@ -648,6 +654,7 @@ import os
 import numpy
 import theano
 import h5py
+from  datetime import datetime
 # from tools import data_loader
 # from optimizer.adam_opt import adam_opt
 # from layers.summ_dppLSTM import summ_dppLSTM
@@ -656,7 +663,7 @@ import h5py
 def train(model_idx, train_set, val_set, lr=0.001, n_iters=100, minibatch=10, valid_period=1, model_saved = ''):
 
     print('... training')
-    model_save_dir = '../models/' + model_idx + '/'
+    model_save_dir = 'dppLST_retrain_'+ str(datetime.now()).replace(' ', 'T') + model_idx + '/'
     if os.path.exists(model_save_dir):
         os.system('rm -r %s' % model_save_dir)
     os.mkdir(model_save_dir)
@@ -664,8 +671,8 @@ def train(model_idx, train_set, val_set, lr=0.001, n_iters=100, minibatch=10, va
     # build model
     print('... building model')
     model = summ_dppLSTM(model_file = model_saved)
-    train_seq = data_loader.SequenceDataset(train_set, batch_size=None, number_batches=minibatch)
-    valid_seq = data_loader.SequenceDataset(val_set, batch_size=None, number_batches=len(val_set[0]))
+    train_seq = SequenceDataset(train_set, batch_size=None, number_batches=minibatch)
+    valid_seq = SequenceDataset(val_set, batch_size=None, number_batches=len(val_set[0]))
 
     # train model
     adam_opt(model, train_seq, valid_seq, model_save_dir = model_save_dir, minibatch = minibatch,
@@ -684,7 +691,7 @@ def inference(model_file, model_idx, test_set, test_dir, te_idx):
     h_func = theano.function(inputs=[model.inputs[0]], outputs=model.classify_mlp.h[-1])
     h_func_k = theano.function(inputs=[model.inputs[0]], outputs=model.kernel_mlp.h[-1])
     cFrm = []
-    for i in xrange(len(test_set[0])):
+    for i in range(len(test_set[0])):
         cFrm.append(test_set[0][i].shape[0])
     xf = h5py.File(model_file, 'r')
     xf.keys()
@@ -713,11 +720,12 @@ if __name__ == '__main__':
     # load data
     print('... loading data')
     train_set, val_set, val_idx, test_set, te_idx = load_data(data_dir = '../data/', dataset_testing = dataset_testing, model_type = model_type)
-    model_file = '../models/model_trained_' + dataset_testing
+    # model_file = 'ddpLSTM_retrain_test_with_' + dataset_testing
 
     """
     Uncomment the following line if you want to train the model
     """
-    # train(model_idx = model_idx, train_set = train_set, val_set = val_set, model_saved = model_file)
+    model_file = None
+    train(model_idx = model_idx, train_set = train_set, val_set = val_set, model_saved = model_file)
 
     inference(model_file=model_file, model_idx = model_idx, test_set=test_set, test_dir='./res_LSTM/', te_idx=te_idx)
