@@ -171,10 +171,6 @@ class HParameters:
         self.output_dir = 'ex-10'
 
         self.root = ''
-        self.datasets=['datasets/eccv16_dataset_summe_google_pool5.h5',
-                       'datasets/eccv16_dataset_tvsum_google_pool5.h5',
-                       'datasets/eccv16_dataset_ovp_google_pool5.h5',
-                       'datasets/eccv16_dataset_youtube_google_pool5.h5']
 
         self.splits = ['splits/tvsum_splits.json',
                         'splits/summe_splits.json']
@@ -199,6 +195,7 @@ class HParameters:
                     val = val.split()
 
                 setattr(self, key, val)
+        self.datasets = self.datasets.split(',')
 
     def __str__(self):
         vars = [attr for attr in dir(self) if not callable(getattr(self,attr)) and not (attr.startswith("__") or attr.startswith("_"))]
@@ -412,6 +409,8 @@ class AONet:
                 target = dataset['gtscore'][...]
                 target = torch.from_numpy(target).unsqueeze(0)
 
+                print(target)
+                
                 # Normalize frame scores
                 target -= target.min()
                 target /= target.max()

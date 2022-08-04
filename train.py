@@ -39,6 +39,10 @@ def train(hps, f_len = 2048):
 
     for split_filename in hps.splits:
         dataset_name, dataset_type, splits = parse_splits_filename(split_filename)
+        
+        # print("---------")
+        # print(parse_splits_filename(split_filename))
+        # print("-----------------")
 
         # For no augmentation use only a dataset corresponding to the split file
         datasets = None
@@ -113,7 +117,7 @@ def train_wrapper(split_file):
   from datetime import datetime
   sys.argv = "main.py "
   sys.argv += '-c '
-  sys.argv += '-d ' + 'for.training/merged.tvsum.summe-inceptionv3_avg.h5.h5'
+  sys.argv += '-d ' + 'for.training/merged.tvsum.summe-inceptionv3_avg.h5.h5,for.training/ucf_crime_anomaly_test_videos_inceptionv3_avg.h5'
   sys.argv += '  -o ' + f"for.training/vasnet_retrain_{os.path.basename(split_file)}-{str(datetime.now()).replace(' ', 'T')}/"
   sys.argv += '  -s ' + split_file
   sys.argv = sys.argv.split()
@@ -131,4 +135,4 @@ def train_wrapper(split_file):
 
   train(hps, f_len)
 
-train_wrapper('for.training/tvsum_augmentation_splits.json')
+train_wrapper('for.training/tvsum_augmentation_with_ucf_crime_splits.json')
