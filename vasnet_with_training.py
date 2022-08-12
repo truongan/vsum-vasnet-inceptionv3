@@ -409,8 +409,6 @@ class AONet:
                 target = dataset['gtscore'][...]
                 target = torch.from_numpy(target).unsqueeze(0)
 
-                print(target)
-                
                 # Normalize frame scores
                 target -= target.min()
                 target /= target.max()
