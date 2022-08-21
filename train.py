@@ -119,23 +119,41 @@ def train_wrapper(split_file):
   sys.argv += '-c '
 #   sys.argv += '-d ' + 'for.training/ucf_crime_anomaly_test_videos_inceptionv3_avg.h5,for.training/ucf_crime_anomaly_test_videos_inceptionv3_avg.h5'
   # sys.argv += '-d ' + 'for.training/merged.tvsum.summe-inceptionv3_avg.h5.h5'
-  sys.argv += '-d ' + 'for.training/merged.tvsum.summe-inceptionv3_avg.h5.h5,for.training/ucf_crime_anomaly_test_poissonpmf_score_0.2-0.3_videos_inceptionv3_avg.h5'
+#   sys.argv += '-d ' + 'for.training/merged.tvsum.summe-inceptionv3_avg.h5.h5,for.training/ucf_crime_anomaly_test_poissonpmf_score_0.2-0.3_videos_inceptionv3_avg.h5'
+#   sys.argv += '-d ' + 'for.training/merged.tvsum.summe-inceptionv3_avg.h5.h5,for.training/ucf_crime_anomaly_test_videos_inceptionv3_avg_poissonpmf_shortened.h5'
+  # sys.argv += '-d ' + 'for.training/merged.tvsum.summe-inceptionv3_avg.h5.h5,for.training/ucf_crime_anomaly_test_videos_inceptionv3_avg_shortened_longer.h5'
+  # sys.argv += '-d ' + 'for.training/merged.tvsum.summe-inceptionv3_avg.h5.h5,for.training/ucf_crime_anomaly_test_videos_inceptionv3_avg_gaussian-pdf_shorten.h5'
+  # sys.argv += '-d ' + 'for.training/merged.tvsum.summe-inceptionv3_avg.h5.h5,for.training/ucf_crime_anomaly_test_videos_inceptionv3_avg_0-1score_shortened.h5'
+  # sys.argv += '-d ' + 'for.training/merged.tvsum.summe-inceptionv3_avg.h5.h5,for.training/HACS_segment_first_0-100pntruongan2005_inceptionv3_avg_shorten_3_event_max.h5'
+  # sys.argv += '-d ' + 'for.training/eccv16_dataset_ovp_google_pool5.h5,for.training/eccv16_dataset_summe_google_pool5.h5,for.training/eccv16_dataset_tvsum_google_pool5.h5,for.training/eccv16_dataset_youtube_google_pool5.h5'
+  sys.argv += '-d ' + 'for.training/merged.tvsum.summe-inceptionv3_avg.h5.h5,for.training/HACS_segment_first_0-100pntruongan2005_inceptionv3_avg_shorten_3_event_max.h5,for.training/HACS_segment_first_100-200pntruongan2005_inceptionv3_avg_shorten_3_event_max.h5,for.training/HACS_segment_first_200-300pntruongan2005_inceptionv3_avg_shorten_3_event_max.h5'
   sys.argv += '  -o ' + f"for.training/vasnet_retrain_{os.path.basename(split_file)}-{str(datetime.now()).replace(' ', 'T')}/"
   sys.argv += '  -s ' + split_file
   sys.argv = sys.argv.split()
 
   args = parser.parse_args()
 
-  #Get feature length
-  h5 = h5py.File('for.training/merged.tvsum.summe-inceptionv3_avg.h5.h5', 'r');
-  f_len =(h5[list(h5.keys())[0]]['features'].shape[1])
 
   # MAIN
   #======================
   hps = HParameters()
   hps.load_from_args(args.__dict__)
 
+
+  #Get feature length
+  h5 = h5py.File(hps.datasets[2], 'r');
+  f_len =(h5[list(h5.keys())[0]]['features'].shape[1])
+
   train(hps, f_len)
 
-train_wrapper('for.training/tvsum_augmentation_with_ucf_crime_poissonpmf_score_splits.json')
+train_wrapper('for.training/tvsum_augmentation_with_summe_hacs_0-100_gaussian-pdf_splits.json')
+# train_wrapper('for.training/tvsum_augmentation_with_summe_hacs_0-300_gaussian-pdf_splits.json')
+# train_wrapper('for.training/tvsum_augmentation_with_hacs_0-300_gaussian-pdf_shortened_no_summe_splits.json')
+# train_wrapper('for.training/tvsum_aug_ovp-youtube-only_splits.json')
+# train_wrapper('for.training/tvsum_augmentation_with_hacs_gaussian-pdf_shortened_no_summe.json')
+# train_wrapper('for.training/tvsum_augmentation_with_ucf_crime_gaussian-pdf_shortened_no_summe.json')
+# train_wrapper('for.training/tvsum_augmentation_with_ucf_crime_0-1score_shortened-longer_splits.json')
+# train_wrapper('for.training/tvsum_augmentation_with_ucf_crime_0-1score_shortened_splits.json')
+# train_wrapper('for.training/tvsum_augmentation_with_ucf_crime_poissonpmf_score_shortened_splits.json')
+# train_wrapper('for.training/tvsum_augmentation_with_ucf_crime_poissonpmf_score_splits.json')
 # train_wrapper('for.training/tvsum_augmentation_splits.json')
